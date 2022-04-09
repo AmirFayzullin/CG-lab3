@@ -2,7 +2,6 @@
 #include <GL/freeglut.h>
 #include <glm/glm.hpp>
 #include <cstdio>
-#include "Math_3d.h"
 using namespace std;
 
 GLuint VBO;
