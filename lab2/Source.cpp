@@ -72,12 +72,12 @@ public:
 void render() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	static float Scale = 0.01f;
-	Scale += 0.01f;
+	static float Scale = 0.1f;
+	Scale += 0.0001f;
 
 	glm::mat4 World;
 	World[0][0] = sinf(Scale); World[0][1] = 0.0f;        World[0][2] = 0.0f;        World[0][3] = 0.0f;
-	World[1][0] = 0.0f;        World[1][1] = cosf(Scale); World[1][2] = 0.0f;        World[1][3] = 0.0f;
+	World[1][0] = 0.0f;        World[1][1] = sinf(Scale); World[1][2] = 0.0f;        World[1][3] = 0.0f;
 	World[2][0] = 0.0f;        World[2][1] = 0.0f;        World[2][2] = sinf(Scale); World[2][3] = 0.0f;
 	World[3][0] = 0.0f;        World[3][1] = 0.0f;        World[3][2] = 0.0f;        World[3][3] = 1.0f;
 
