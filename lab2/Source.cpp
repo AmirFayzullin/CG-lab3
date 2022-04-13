@@ -4,9 +4,87 @@
 #include <cstdio>
 using namespace std;
 
+#define M_PI 3.14159265358979323846
+#define ToRadian(x) ((x) * M_PI / 180.0f)
+#define ToDegree(x) ((x) * 180.0f / M_PI)
+
 GLuint VBO;
 
 GLuint gWorldLocation;
+
+class Pipeline {
+	glm::vec3 
+		vScale{ 0.0f, 0.0f, 0.0f },
+		vRotate{ 0.0f, 0.0f, 0.0f },
+		vTranslation{ 0.0f, 0.0f, 0.0f };
+	glm::mat4 mTransformation;
+
+	glm::mat4 InitScaleTransform() {
+		return glm::mat4{
+			{vScale[0], 0.0f, 0.0f, 0.0f},
+			{0.0f, vScale[1], 0.0f, 0.0f},
+			{0.0f, 0.0f, vScale[2], 0.0f},
+			{0.0f, 0.0f, 0.0f, 1.0f}
+		};
+	}
+
+	glm::mat4 InitRotateTransform() {
+		glm::mat4 xm, ym, zm;
+
+		float x = ToRadian(vRotate[0]);
+		float y = ToRadian(vRotate[1]);
+		float z = ToRadian(vRotate[2]);
+
+		xm = {
+			{1.0f, 0.0f, 0.0f, 0.0f},
+			{0.0f, cosf(x), -sinf(x), 0.0f},
+			{0.0f, sinf(x), cosf(x), 0.0f},
+			{0.0f, 0.0f, 0.0f, 1.0f},
+		};
+
+		ym = {
+			{cosf(y), 0.0f, -sinf(y), 0.0f},
+			{0.0f, 1.0f, 0.0f, 0.0f},
+			{sinf(y), 0.0f, cosf(y), 0.0f},
+			{0.0f, 0.0f, 0.0f, 1.0f},
+		};
+
+		zm = {
+			{cosf(z), -sinf(z), 0.0f, 0.0f},
+			{sinf(z), cosf(z), 0.0f, 0.0f},
+			{0.0f, 0.0f, 1.0f, 0.0f},
+			{0.0f, 0.0f, 0.0f, 1.0f},
+		};
+
+		return xm * ym * zm;
+	}
+
+	glm::mat4 InitTranslationTransform() {
+		return glm::mat4{
+			{1.0f, 0.0f, 0.0f, vTranslation[0]},
+			{0.0f, 1.0f, 0.0f, vTranslation[1]},
+			{0.0f, 0.0f, 1.0f, vTranslation[2]},
+			{0.0f, 0.0f, 0.0f, 1.0f},
+		};
+	}
+
+public:
+	void Scale(float x, float y, float z) {
+		vScale = {x, y, z};
+	}
+
+	void WorldPos(float x, float y, float z) {
+		vTranslation = { x, y, z };
+	}
+
+	void Rotate(float x, float y, float z) {
+		vRotate = {x, y, z};
+	}
+
+	glm::mat4 GetTrans() {
+		return InitRotateTransform() * InitScaleTransform() * InitTranslationTransform();
+	}
+};
 
 class GLProgram {
 protected:
@@ -73,15 +151,13 @@ void render() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	static float Scale = 0.1f;
-	Scale += 0.0001f;
+	Scale += 0.001f;
 
-	glm::mat4 World;
-	World[0][0] = sinf(Scale); World[0][1] = 0.0f;        World[0][2] = 0.0f;        World[0][3] = 0.0f;
-	World[1][0] = 0.0f;        World[1][1] = sinf(Scale); World[1][2] = 0.0f;        World[1][3] = 0.0f;
-	World[2][0] = 0.0f;        World[2][1] = 0.0f;        World[2][2] = sinf(Scale); World[2][3] = 0.0f;
-	World[3][0] = 0.0f;        World[3][1] = 0.0f;        World[3][2] = 0.0f;        World[3][3] = 1.0f;
-
-	glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &World[0][0]);
+	Pipeline p;
+	p.Scale(sinf(Scale * 0.1f), sinf(Scale * 0.1f), sinf(Scale * 0.1f));
+	p.WorldPos(sinf(Scale), 0.0f, 0.0f);
+	p.Rotate(sinf(Scale) * 90.0f, sinf(Scale) * 90.0f, sinf(Scale) * 90.0f);
+	glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &(p.GetTrans()[0][0]));
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
