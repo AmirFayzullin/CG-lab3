@@ -8,16 +8,30 @@ using namespace std;
 #define ToRadian(x) ((x) * M_PI / 180.0f)
 #define ToDegree(x) ((x) * 180.0f / M_PI)
 
+#define WINDOW_WIDTH 1024
+#define WINDOW_HEIGHT 768
+
 GLuint VBO;
 
 GLuint gWorldLocation;
 
 class Pipeline {
+	struct PerspectiveProjInfo {
+		float FOV;
+		float Width;
+		float Height;
+		float zNear;
+		float zFar;
+	};
+
 	glm::vec3 
-		vScale{ 0.0f, 0.0f, 0.0f },
+		vScale{ 1.0f, 1.0f, 1.0f },
 		vRotate{ 0.0f, 0.0f, 0.0f },
 		vTranslation{ 0.0f, 0.0f, 0.0f };
+	
 	glm::mat4 mTransformation;
+
+	PerspectiveProjInfo perspectiveProjInfo{ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
 	glm::mat4 InitScaleTransform() {
 		return glm::mat4{
@@ -68,6 +82,21 @@ class Pipeline {
 		};
 	}
 
+	glm::mat4 InitPerspectiveProj() {
+		const float ar = perspectiveProjInfo.Width / perspectiveProjInfo.Height;
+		const float zNear = perspectiveProjInfo.zNear;
+		const float zFar = perspectiveProjInfo.zFar;
+		const float zRange = zNear - zFar;
+		const float tanHalfFOV = tanf(ToRadian(perspectiveProjInfo.FOV / 2.0));
+
+		return glm::mat4{
+			{1.0f / (ar * tanHalfFOV), 0.0f, 0.0f, 0.0f},
+			{0.0f, 1.0f / tanHalfFOV, 0.0f, 0.0f},
+			{0.0f, 0.0f, (-zNear - zFar) / zRange, (2.0f * zFar * zNear) / zRange},
+			{0.0f, 0.0f, 1.0f, 0.0f}
+		};
+	}
+
 public:
 	void Scale(float x, float y, float z) {
 		vScale = {x, y, z};
@@ -81,8 +110,12 @@ public:
 		vRotate = {x, y, z};
 	}
 
+	void setPerspectiveProj(float FOV, float Width, float Height, float zNear, float zFar) {
+		perspectiveProjInfo = {FOV, Width, Height, zNear, zFar};
+	}
+
 	glm::mat4 GetTrans() {
-		return InitRotateTransform() * InitScaleTransform() * InitTranslationTransform();
+		return InitPerspectiveProj() * InitRotateTransform() * InitScaleTransform() * InitTranslationTransform();
 	}
 };
 
@@ -157,6 +190,7 @@ void render() {
 	p.Scale(sinf(Scale * 0.1f), sinf(Scale * 0.1f), sinf(Scale * 0.1f));
 	p.WorldPos(sinf(Scale), 0.0f, 0.0f);
 	p.Rotate(sinf(Scale) * 90.0f, sinf(Scale) * 90.0f, sinf(Scale) * 90.0f);
+	p.setPerspectiveProj(30.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 1.0f, 1000.0f);
 	glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &(p.GetTrans()[0][0]));
 
 	glEnableVertexAttribArray(0);
@@ -188,7 +222,7 @@ void prepareVertices() {
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowSize(1024, 768);
+	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutInitWindowPosition(50, 50);
 	glutCreateWindow("Amir");
 	glutDisplayFunc(render);
