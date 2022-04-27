@@ -145,6 +145,10 @@
     <ClInclude Include="GLProgram.h" />
     <ClInclude Include="Math_3d.h" />
     <ClInclude Include="Pipeline.h" />
+    <ClInclude Include="Texture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="bauble.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

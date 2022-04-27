@@ -4,13 +4,15 @@
 #include <cstdio>
 #include "Pipeline.h"
 #include "GLProgram.h"
+#include "Texture.h"
 using namespace std;
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
 
 GLuint VBO;
-
+GLuint gSampler;
+Texture* pTexture = nullptr;
 GLuint gWorldLocation;
 
 
@@ -21,9 +23,9 @@ void render() {
 	Scale += 0.01f;
 
 	Pipeline p;
-	p.Scale(sinf(Scale * 0.1f), sinf(Scale * 0.1f), sinf(Scale * 0.1f));
-	p.WorldPos(sinf(Scale), 0.0f, 0.0f);
-	//p.Rotate(sinf(Scale) * 90.0f, sinf(Scale) * 90.0f, sinf(Scale) * 90.0f);
+	p.Scale(0.3f, 0.3f, 0.3f);
+	p.WorldPos(-0.5f, 1.0f, 0.0f);
+	p.Rotate(sinf(Scale) * 90.0f, sinf(Scale) * 90.0f, sinf(1.0f) * 90.0f);
 
 	glm::vec3 CameraPos{ 1.0f, 1.0f, -3.0f };
 	glm::vec3 CameraTarget{ 0.45f, 0.0f, 1.0f };
@@ -44,8 +46,24 @@ void render() {
 	glutSwapBuffers();
 }
 
-const GLchar pVS[] = "#version 330\n layout (location = 0) in vec3 Position; uniform mat4 gWorld; void main() {gl_Position = gWorld * vec4(Position, 1.0);}";
-const GLchar pFS[] = "#version 330\n out vec4 FragColor; void main() {FragColor = vec4(0.5, 0.5, 0.5, 1.0);}";
+const GLchar pVS[] = "\n\
+#version 330\n\
+layout (location = 0) in vec3 Position; \n\
+layout (location = 1) in vec2 TexCoord; \n\
+uniform mat4 gWorld; \n\
+out vec2 TexCoord0;  \n\
+void main() { \n\
+	gl_Position = gWorld * vec4(Position, 1.0); \n\
+	TexCoord0 = TexCoord;\n\
+}";
+const GLchar pFS[] = "\n\
+#version 330\n\
+in vec2 TexCoord0; \n\
+out vec4 FragColor; \n\
+uniform sampler2D gSampler;\n\
+void main() {\n\
+	FragColor = texture2D(gSampler, TexCoord0.xy);\n\
+}";
 
 void prepareVertices() {
 	glm::vec3 vectors[3] = {
@@ -76,7 +94,7 @@ int main(int argc, char** argv) {
 		throw "error";
 	}
 
-	prepareVertices();
+	Magick::InitializeMagick(*argv);
 
 	GLShaderProgram shader;
 	shader.addShader(GL_VERTEX_SHADER, pVS);
@@ -84,7 +102,19 @@ int main(int argc, char** argv) {
 	shader.linkProgram();
 	shader.use();
 	gWorldLocation = shader.getUniformLocation("gWorld");
+	gSampler = shader.getUniformLocation("gSampler");
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);	
+
+	glUniform1i(gSampler, 0);
+
+	prepareVertices();
+
+	pTexture = new Texture(GL_TEXTURE_2D, "C:/Users/Amir/Desktop/For UGATU/Computer graphics/lab3/lab2/bauble.png");
+
+	if (!pTexture->Load()) {
+		return 1;
+	}
+
 	glutMainLoop();
 }
