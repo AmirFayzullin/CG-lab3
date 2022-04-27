@@ -32,6 +32,18 @@
     <ClInclude Include="Texture.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="GLUTBackend.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ICallbacks.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Main.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LightingProgram.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="bauble.png">

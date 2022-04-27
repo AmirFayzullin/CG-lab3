@@ -2,24 +2,14 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <cstdio>
-#include "GLProgram.h"
+using namespace std;
 
 class GLProgram {
+
 protected:
 	GLuint program;
 
-public:
-	GLProgram() {}
-
-	virtual void linkProgram() = 0;
-
-	void use() {
-		glUseProgram(program);
-	}
-};
-
-class GLShaderProgram : public GLProgram {
-	void compileShader(GLuint ShaderObj) {
+	bool compileShader(GLuint ShaderObj) {
 		glCompileShader(ShaderObj);
 
 		GLint success;
@@ -28,19 +18,14 @@ class GLShaderProgram : public GLProgram {
 			GLchar InfoLog[1024];
 			glGetShaderInfoLog(ShaderObj, sizeof(InfoLog), NULL, InfoLog);
 			fprintf(stderr, "Error compiling shader: '%s'\n", InfoLog);
+			return false;
 		}
+
+		return true;
 	}
 
-public:
-	GLuint getUniformLocation(const char* name) {
-		return glGetUniformLocation(program, (GLchar*)name);
-	}
 
-	GLShaderProgram() : GLProgram() {
-		program = glCreateProgram();
-	}
-
-	void linkProgram() override {
+	bool linkProgram() {
 		glLinkProgram(program);
 		GLint Success;
 		GLchar* ErrorLog = nullptr;
@@ -48,6 +33,7 @@ public:
 		if (Success == 0) {
 			glGetProgramInfoLog(program, sizeof(ErrorLog), NULL, ErrorLog);
 			fprintf(stderr, "Error linking shader program: '%s'\n", ErrorLog);
+			return false;
 		}
 
 		glValidateProgram(program);
@@ -57,9 +43,11 @@ public:
 			fprintf(stderr, "Invalid shader program: '%s'\n", ErrorLog);
 			exit(1);
 		}
+
+		return true;
 	}
 
-	void addShader(GLenum type, const GLchar* text) {
+	bool addShader(GLenum type, const GLchar* text) {
 		GLuint ShaderObj = glCreateShader(type);
 		const GLchar* p[1];
 		p[0] = text;
@@ -67,10 +55,30 @@ public:
 		Lengths[0] = strlen(text);
 		glShaderSource(ShaderObj, 1, p, Lengths);
 
-		this->compileShader(ShaderObj);
+		if (!compileShader(ShaderObj)) return false;
 
 		glAttachShader(program, ShaderObj);
 
-		glValidateProgram(program);
+		return true;
+	}
+
+public:
+
+	virtual bool init() {
+		program = glCreateProgram();
+
+		if (!program) {
+			return false;
+		}
+
+		return true;
+	}
+
+	void use() {
+		glUseProgram(program);
+	}
+
+	GLuint getUniformLocation(const char* name) {
+		return glGetUniformLocation(program, (GLchar*)name);
 	}
 };

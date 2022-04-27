@@ -143,6 +143,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLProgram.h" />
+    <ClInclude Include="GLUTBackend.h" />
+    <ClInclude Include="ICallbacks.h" />
+    <ClInclude Include="LightingProgram.h" />
+    <ClInclude Include="Main.h" />
     <ClInclude Include="Math_3d.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="Texture.h" />
