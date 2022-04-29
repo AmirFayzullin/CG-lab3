@@ -17,7 +17,7 @@ class Main : public ICallbacks {
 	LightingProgram* pLighting = nullptr;
 	const char* texturePath = "C:/Users/Amir/Desktop/For UGATU/Computer graphics/lab3/lab2/bauble.png";
 
-	DirectionLight dirLight = { {1.0f, 0.1f, 0.1f}, 0.5f };
+	DirectionLight dirLight = { {0.8f, 0.8f, 0.8f}, 0.5f };
 
 
 	void CreateVertices() {
@@ -75,18 +75,20 @@ public:
 		p.SetCamera(CameraPos, CameraTarget, CameraUp);
 
 		p.SetPerspectiveProj(30.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 1.0f, 1000.0f);
-		//glUniformMatrix4fv( gWorldLocation, 1, GL_TRUE, &(p.GetTrans()[0][0]));
 		pLighting->setGWP(&(p.GetTrans()[0][0]));
 		pLighting->setDirectionalLight(dirLight);
 
 		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (const GLvoid*)12);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
 		pTexture->Bind(GL_TEXTURE0);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
 
 		glutSwapBuffers();
 	}
