@@ -7,93 +7,107 @@
 #include "Texture.h"
 #include "LightingProgram.h"
 
+struct Vertex {
+    glm::vec3 fst;
+    glm::vec2 snd;
+
+    Vertex(glm::vec3 inp1, glm::vec2 inp2) {
+        fst = inp1;
+        snd = inp2;
+    }
+};
+
 class Main : public ICallbacks {
-	int WINDOW_WIDTH = 1024;
-	int WINDOW_HEIGHT = 768;
-	
-	GLuint gWorldLocation;
-	GLuint VBO;
-	Texture* pTexture = nullptr;
-	LightingProgram* pLighting = nullptr;
-	const char* texturePath = "C:/Users/Amir/Desktop/For UGATU/Computer graphics/lab3/lab2/bauble.png";
+    int WINDOW_WIDTH = 1024;
+    int WINDOW_HEIGHT = 768;
 
-	DirectionLight dirLight = { {0.8f, 0.8f, 0.8f}, 0.5f };
+    GLuint gWorldLocation;
+    GLuint VBO;
+    GLuint IBO;
+    Texture* pTexture = nullptr;
+    LightingProgram* pLighting = nullptr;
+    const char* texturePath = "C:\\Users\\Amir\\Desktop\\For UGATU\\Computer graphics\\lab3\\lab2\\test.jpg";
+
+    DirectionLight dirLight = { {0.9f, 0.9f, 0.9f}, 0.5f };
 
 
-	void CreateVertices() {
-		glm::vec3 vectors[3] = {
-			{ -0.9f, -0.9f, 0.1f},
-			{ 0.9f, -0.9f, 0.1f},
-			{ 0.1f, 0.9f, 0.9f},
-		};
+    void CreateVertices() {
+        Vertex input[4] = {
+          Vertex(glm::vec3 {-1.0f, -1.0f, 0.5773f}, glm::vec2 {0.0f, 0.0f}),
+          Vertex(glm::vec3 {0.0f, -1.0f, -1.1547}, glm::vec2 {0.5f, 0.0f}),
+          Vertex(glm::vec3 {1.0f, -1.0f, 0.5773f}, glm::vec2 {1.0f, 0.0f}),
+          Vertex(glm::vec3 {0.0f, 1.0f, 0.0f}, glm::vec2 {0.5f, 1.0f}),
+        };
 
-		glGenBuffers(1, &VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vectors), vectors, GL_STATIC_DRAW);
-	}
+        glGenBuffers(1, &VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(input), input, GL_STATIC_DRAW);
 
-public: 
-	~Main() {
-		delete pTexture;
-		delete pLighting;
-	}
+        unsigned int Indices[] = { 0, 3, 1,
+                     1, 3, 2,
+                     2, 3, 0,
+                     1, 2, 0 };
 
-	bool Init() {
-		CreateVertices();
+        glGenBuffers(1, &IBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
+    }
 
-		pLighting = new LightingProgram();
+public:
+    ~Main() {
+        delete pTexture;
+        delete pLighting;
+    }
 
-		if (!pLighting->init()) return false;
+    bool Init() {
+        CreateVertices();
 
-		pLighting->use();
+        pLighting = new LightingProgram();
 
-		pLighting->setTextureUnit(0);
+        if (!pLighting->init()) return false;
 
-		pTexture = new Texture(GL_TEXTURE_2D, texturePath);
+        pLighting->use();
 
-		if (!pTexture->Load()) {
-			return false;
-		}
+        pLighting->setTextureUnit(0);
 
-		return true;
-	}
+        pTexture = new Texture(GL_TEXTURE_2D, texturePath);
 
-	void RenderSceneCB() override {
-		glClear(GL_COLOR_BUFFER_BIT);
+        if (!pTexture->Load()) {
+            return false;
+        }
 
-		static float Scale = 0.1f;
-		Scale += 0.01f;
+        return true;
+    }
 
-		Pipeline p;
-		p.Scale(0.3f, 0.3f, 0.3f);
-		p.WorldPos(-0.5f, 1.0f, 0.0f);
-		p.Rotate(sinf(Scale) * 90.0f, sinf(Scale) * 90.0f, sinf(1.0f) * 90.0f);
+    void RenderSceneCB() override {
+        glClear(GL_COLOR_BUFFER_BIT);
 
-		glm::vec3 CameraPos{ 1.0f, 1.0f, -3.0f };
-		glm::vec3 CameraTarget{ 0.45f, 0.0f, 1.0f };
-		glm::vec3 CameraUp{ 0.0f, 1.0f, 0.0f };
-		p.SetCamera(CameraPos, CameraTarget, CameraUp);
+        static float v = 0.1f;
+        v += 0.001f;
 
-		p.SetPerspectiveProj(30.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 1.0f, 1000.0f);
-		pLighting->setGWP(&(p.GetTrans()[0][0]));
-		pLighting->setDirectionalLight(dirLight);
+        Pipeline p;
+        p.Scale(0.6f, 0.6f, 0.6f);
+        p.WorldPos(0.1f, 0.1f, 0.5f);
+        p.Rotate(sinf(v) * 90, sinf(v) * 90, 0.1f);
+        pLighting->setGWP(&(p.GetTrans()[0][0]));
+        pLighting->setDirectionalLight(dirLight);
 
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (const GLvoid*)12);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        pTexture->Bind(GL_TEXTURE0);
+        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 
-		pTexture->Bind(GL_TEXTURE0);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
+        glutSwapBuffers();
+    }
 
-		glutSwapBuffers();
-	}
-
-	void IdleCB() override {
-		RenderSceneCB();
-	}
+    void IdleCB() override {
+        RenderSceneCB();
+    }
 };

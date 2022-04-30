@@ -143,7 +143,6 @@ public:
 		CameraRotateTrans = InitCameraTransform(m_camera.Target, m_camera.Up);
 		PersProjTrans = InitPerspectiveProj(perspectiveProjInfo.FOV, perspectiveProjInfo.Width, perspectiveProjInfo.Height, perspectiveProjInfo.zNear, perspectiveProjInfo.zFar);
 
-		//return PersProjTrans * CameraRotateTrans * CameraTranslationTrans * TranslationTrans * RotateTrans * ScaleTrans;
-		return PersProjTrans * CameraRotateTrans * CameraTranslationTrans * TranslationTrans * RotateTrans * ScaleTrans;
+		return ScaleTrans * RotateTrans * TranslationTrans;
 	}
 };
