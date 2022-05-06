@@ -8,12 +8,16 @@
 #include "LightingProgram.h"
 
 struct Vertex {
-    glm::vec3 fst;
-    glm::vec2 snd;
+    glm::vec3 pos;
+    glm::vec2 tex;
+    glm::vec3 normal;
 
-    Vertex(glm::vec3 inp1, glm::vec2 inp2) {
-        fst = inp1;
-        snd = inp2;
+    Vertex() {}
+
+    Vertex(glm::vec3 _pos, glm::vec2 _tex) {
+        pos = _pos;
+        tex = _tex;
+        normal = glm::vec3(0.0f, 0.0f, 0.0f);
     }
 };
 
@@ -21,14 +25,34 @@ class Main : public ICallbacks {
     int WINDOW_WIDTH = 1024;
     int WINDOW_HEIGHT = 768;
 
-    GLuint gWorldLocation;
     GLuint VBO;
     GLuint IBO;
     Texture* pTexture = nullptr;
     LightingProgram* pLighting = nullptr;
     const char* texturePath = "C:\\Users\\Amir\\Desktop\\For UGATU\\Computer graphics\\lab3\\lab2\\test.jpg";
 
-    DirectionLight dirLight = { {0.9f, 0.9f, 0.9f}, 0.5f };
+    DirectionLight dirLight = { {0.9f, 0.9f, 0.9f}, 0.5f, {0.5f, 0.5f, 0.5f}, 1.0f};
+
+    void CalcNormals(const unsigned int* pIndices, unsigned int IndexCount, Vertex* pVertices, unsigned int VertexCount)
+    {
+        for (unsigned int i = 0; i < IndexCount; i += 3) {
+            unsigned int Index0 = pIndices[i];
+            unsigned int Index1 = pIndices[i + 1];
+            unsigned int Index2 = pIndices[i + 2];
+            glm::vec3 v1 = pVertices[Index1].pos - pVertices[Index0].pos;
+            glm::vec3 v2 = pVertices[Index2].pos - pVertices[Index0].pos;
+            glm::vec3 Normal = glm::cross(v1, v2);
+            glm::normalize(Normal);
+
+            pVertices[Index0].normal += Normal;
+            pVertices[Index1].normal += Normal;
+            pVertices[Index2].normal += Normal;
+        }
+
+        for (unsigned int i = 0; i < VertexCount; i++) {
+            glm::normalize(pVertices[i].normal);
+        }
+    }
 
 
     void CreateVertices() {
@@ -83,26 +107,39 @@ public:
         glClear(GL_COLOR_BUFFER_BIT);
 
         static float v = 0.1f;
-        v += 0.001f;
+        v += 0.01f;
 
         Pipeline p;
-        p.Scale(0.6f, 0.6f, 0.6f);
-        p.WorldPos(0.1f, 0.1f, 0.5f);
-        p.Rotate(sinf(v) * 90, sinf(v) * 90, 0.1f);
-        pLighting->setGWP(&(p.GetTrans()[0][0]));
+        p.Scale(0.4f, 0.4f, 0.4f);
+        //p.WorldPos(0.3f, 0.1f, 1.0f);
+        p.Rotate(0.0f, sinf(v) * 90.0f, sinf(v) * 90.0f);
+
+        glm::vec3 CameraPos{ 0.5f, 0.7f, 2.0f };
+        glm::vec3 CameraTarget{ 0.45f, 0.0f, 1.0f };
+        glm::vec3 CameraUp{ 0.0f, 1.0f, 0.0f };
+        p.SetCamera(CameraPos, CameraTarget, CameraUp);
+
+        p.SetPerspectiveProj(60.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 1.0f, 1000.0f);
+
+        pLighting->setWVP(&(p.getTransformationMatrix()[0][0]));
+        pLighting->setWorldMatrix(&(p.getTransformationMatrix()[0][0]));
         pLighting->setDirectionalLight(dirLight);
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)20);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
         pTexture->Bind(GL_TEXTURE0);
         glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
 
         glutSwapBuffers();
     }
