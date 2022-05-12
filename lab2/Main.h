@@ -109,6 +109,28 @@ class Main : public ICallbacks {
         pLighting->setPointLights(3, pl);
     }
 
+    void setSpotLights(const glm::vec3& cameraPos, const glm::vec3& cameraTarget) {
+        static float scale = 0.1f;
+        scale += 0.01f;
+
+        SpotLight sl[2];
+        sl[0].DiffuseIntensity = 15.0f;
+        sl[0].Color = glm::vec3(1.0f, 1.0f, 0.7f);
+        sl[0].Position = glm::vec3(-0.0f, -1.9f, -0.0f);
+        sl[0].Direction = glm::vec3(sinf(scale), 0.0f, cosf(scale));
+        sl[0].Attenuation.Linear = 0.1f;
+        sl[0].Cutoff = 20.0f;
+
+        sl[1].DiffuseIntensity = 5.0f;
+        sl[1].Color = glm::vec3(0.0f, 1.0f, 1.0f);
+        sl[1].Position = cameraPos;
+        sl[1].Direction = cameraTarget;
+        sl[1].Attenuation.Linear = 0.1f;
+        sl[1].Cutoff = 20.0f;
+
+        pLighting->setSpotLights(2, sl);
+    }
+
 public:
     ~Main() {
         delete pTexture;
@@ -138,7 +160,7 @@ public:
     void RenderSceneCB() override {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        setPointLights();
+        //setPointLights();
 
         static float v = 0.1f;
         v += 0.01f;
@@ -154,6 +176,9 @@ public:
 
         pLighting->setDirLight(dirLight);
         glm::vec3 cameraPos = { 0.0f, 0.0f, 0.0f };
+        glm::vec3 cameraTarget = { 0.0f, 0.0f, v };
+        setSpotLights(cameraPos, cameraTarget);
+        setPointLights();
         pLighting->setEyeWorldPos(cameraPos);
         pLighting->setSpecularIntensity(0.5f);
         pLighting->setSpecularPower(32);
