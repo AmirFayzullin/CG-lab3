@@ -86,6 +86,29 @@ class Main : public ICallbacks {
         glBufferData(GL_ARRAY_BUFFER, sizeof(input), input, GL_STATIC_DRAW);
     }
 
+    void setPointLights() {
+        static float scale = 0.1f;
+        scale += 0.01f;
+
+        PointLight pl[3];
+        pl[0].DiffuseIntensity = 0.8f;
+        pl[0].Color = glm::vec3(1.0f, 1.0f, 0.0f);
+        pl[0].Position = glm::vec3(sinf(scale) * 10, 1.0f, cosf(scale) * 10);
+        pl[0].Attenuation.Linear = 0.1f;
+
+        pl[1].DiffuseIntensity = 0.8f;
+        pl[1].Color = glm::vec3(0.0f, 1.0f, 0.0f);
+        pl[1].Position = glm::vec3(sinf(scale + 2.1f) * 10, 1.0f, cosf(scale + 2.1f) * 10);
+        pl[1].Attenuation.Linear = 0.1f;
+
+        pl[2].DiffuseIntensity = 0.8f;
+        pl[2].Color = glm::vec3(0.0f, 0.0f, 1.0f);
+        pl[2].Position = glm::vec3(sinf(scale + 4.2f) * 10, 1.0f, cosf(scale + 4.2f) * 10);
+        pl[2].Attenuation.Linear = 0.1f;
+
+        pLighting->setPointLights(3, pl);
+    }
+
 public:
     ~Main() {
         delete pTexture;
@@ -115,6 +138,8 @@ public:
     void RenderSceneCB() override {
         glClear(GL_COLOR_BUFFER_BIT);
 
+        setPointLights();
+
         static float v = 0.1f;
         v += 0.01f;
 
@@ -128,10 +153,8 @@ public:
         pLighting->setWVP(WorldTransformation);
 
         pLighting->setDirLight(dirLight);
-
-        glm::vec3 camrePos = { 0.0f, 0.0f, 0.0f };
-
-        pLighting->setEyeWorldPos(camrePos);
+        glm::vec3 cameraPos = { 0.0f, 0.0f, 0.0f };
+        pLighting->setEyeWorldPos(cameraPos);
         pLighting->setSpecularIntensity(0.5f);
         pLighting->setSpecularPower(32);
 
