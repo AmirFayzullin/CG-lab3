@@ -6,6 +6,9 @@
 #include "Pipeline.h"
 #include "Texture.h"
 #include "LightingProgram.h"
+#include "Math_3d.h"
+
+#define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))
 
 struct Vertex {
     glm::vec3 pos;
@@ -29,9 +32,9 @@ class Main : public ICallbacks {
     GLuint IBO;
     Texture* pTexture = nullptr;
     LightingProgram* pLighting = nullptr;
-    const char* texturePath = "C:\\Users\\Amir\\Desktop\\For UGATU\\Computer graphics\\lab3\\lab2\\test.jpg";
+    const char* texturePath = "C:\\Users\\Amir\\Desktop\\For UGATU\\Computer graphics\\lab3\\lab2\\texture.jpg";
 
-    DirectionLight dirLight = { {0.9f, 0.9f, 0.9f}, 0.5f, {0.5f, 0.5f, 0.5f}, 1.0f};
+    DirectionalLight dirLight = { {0.9f, 0.9f, 0.9f}, 0.0f, {1.0f, 0.0f, 0.0f}, 0.75f};
 
     void CalcNormals(const unsigned int* pIndices, unsigned int IndexCount, Vertex* pVertices, unsigned int VertexCount)
     {
@@ -41,8 +44,8 @@ class Main : public ICallbacks {
             unsigned int Index2 = pIndices[i + 2];
             glm::vec3 v1 = pVertices[Index1].pos - pVertices[Index0].pos;
             glm::vec3 v2 = pVertices[Index2].pos - pVertices[Index0].pos;
-            glm::vec3 Normal = glm::cross(v1, v2);
-            glm::normalize(Normal);
+            glm::vec3 Normal = VectorsMath::Cross(v1, v2);
+            VectorsMath::Normalize(Normal);
 
             pVertices[Index0].normal += Normal;
             pVertices[Index1].normal += Normal;
@@ -50,12 +53,23 @@ class Main : public ICallbacks {
         }
 
         for (unsigned int i = 0; i < VertexCount; i++) {
-            glm::normalize(pVertices[i].normal);
+            VectorsMath::Normalize(pVertices[i].normal);
         }
     }
 
 
     void CreateVertices() {
+        unsigned int Indices[] = {
+             0, 3, 1,
+             1, 3, 2,
+             2, 3, 0,
+             1, 2, 0
+        };
+
+        glGenBuffers(1, &IBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
+
         Vertex input[4] = {
           Vertex(glm::vec3 {-1.0f, -1.0f, 0.5773f}, glm::vec2 {0.0f, 0.0f}),
           Vertex(glm::vec3 {0.0f, -1.0f, -1.1547}, glm::vec2 {0.5f, 0.0f}),
@@ -63,18 +77,13 @@ class Main : public ICallbacks {
           Vertex(glm::vec3 {0.0f, 1.0f, 0.0f}, glm::vec2 {0.5f, 1.0f}),
         };
 
+        unsigned int VertexCount = ARRAY_SIZE_IN_ELEMENTS(input);
+
+        CalcNormals(Indices, ARRAY_SIZE_IN_ELEMENTS(Indices), input, VertexCount);
+
         glGenBuffers(1, &VBO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(input), input, GL_STATIC_DRAW);
-
-        unsigned int Indices[] = { 0, 3, 1,
-                     1, 3, 2,
-                     2, 3, 0,
-                     1, 2, 0 };
-
-        glGenBuffers(1, &IBO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
     }
 
 public:
@@ -110,20 +119,21 @@ public:
         v += 0.01f;
 
         Pipeline p;
-        p.Scale(0.4f, 0.4f, 0.4f);
-        //p.WorldPos(0.3f, 0.1f, 1.0f);
-        p.Rotate(0.0f, sinf(v) * 90.0f, sinf(v) * 90.0f);
+        p.Scale(0.7f, 0.7f, 0.7f);
+        p.WorldPos(0.0f, 0.0f, 1.0f);
+        p.Rotate(0.0f, sinf(v) * 90.0f, 0.0f);
 
-        glm::vec3 CameraPos{ 0.5f, 0.7f, 2.0f };
-        glm::vec3 CameraTarget{ 0.45f, 0.0f, 1.0f };
-        glm::vec3 CameraUp{ 0.0f, 1.0f, 0.0f };
-        p.SetCamera(CameraPos, CameraTarget, CameraUp);
+        const glm::mat4x4& WorldTransformation = p.getWorldTrans();
+        pLighting->setGWP(WorldTransformation);
+        pLighting->setWVP(WorldTransformation);
 
-        p.SetPerspectiveProj(60.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 1.0f, 1000.0f);
+        pLighting->setDirLight(dirLight);
 
-        pLighting->setWVP(&(p.getTransformationMatrix()[0][0]));
-        pLighting->setWorldMatrix(&(p.getTransformationMatrix()[0][0]));
-        pLighting->setDirectionalLight(dirLight);
+        glm::vec3 camrePos = { 0.0f, 0.0f, 0.0f };
+
+        pLighting->setEyeWorldPos(camrePos);
+        pLighting->setSpecularIntensity(0.5f);
+        pLighting->setSpecularPower(32);
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
